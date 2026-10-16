@@ -1,0 +1,6 @@
+{
+  "name": "Math Battle Offline",
+  "description": "Game kuis matematika kompetitif offline untuk semua jenjang dengan aneka mode permainan, duel AI, dan boss battle.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
