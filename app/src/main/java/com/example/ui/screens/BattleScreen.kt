@@ -57,13 +57,21 @@ import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.NeonRed
 import com.example.ui.theme.SurfaceDark
 import com.example.ui.theme.SurfaceElevated
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.MusicOff
 import com.example.viewmodel.BattleState
 
 @Composable
 fun BattleScreen(
     state: BattleState,
+    isTtsSpeaking: Boolean = false,
+    isTtsEnabled: Boolean = true,
+    isMusicEnabled: Boolean = true,
+    onToggleMusic: () -> Unit = {},
     onAnswerOption: (String) -> Unit,
     onNextQuestion: () -> Unit,
+    onSpeakQuestion: (String) -> Unit,
+    onStopSpeaking: () -> Unit = {},
     onPause: () -> Unit,
     onResume: () -> Unit,
     onExitBattle: () -> Unit
@@ -142,7 +150,23 @@ fun BattleScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Quick BGM Music Toggle during gameplay
+                    IconButton(
+                        onClick = onToggleMusic,
+                        modifier = Modifier
+                            .testTag("battle_music_toggle")
+                            .size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isMusicEnabled) Icons.Default.MusicNote else Icons.Default.MusicOff,
+                            contentDescription = if (isMusicEnabled) "Matikan Musik" else "Nyalakan Musik",
+                            tint = if (isMusicEnabled) NeonCyan else Color(0xFF64748B)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(2.dp))
 
                     IconButton(
                         onClick = onPause,
@@ -383,7 +407,7 @@ fun BattleScreen(
                 }
             }
 
-            // Question Card
+            // Question Card with Speaker Audio Button
             item {
                 Box(
                     modifier = Modifier
@@ -399,12 +423,52 @@ fun BattleScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = q?.category ?: "Matematika",
-                                color = NeonCyan,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = q?.category ?: "Matematika",
+                                    color = NeonCyan,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            if (isTtsSpeaking) Color(0xFF381E54)
+                                            else if (isTtsEnabled) Color(0xFF132A3E)
+                                            else Color(0xFF1E2433)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (isTtsSpeaking) NeonPurple
+                                            else if (isTtsEnabled) NeonCyan.copy(alpha = 0.5f)
+                                            else Color(0xFF475569),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable {
+                                            if (isTtsSpeaking) {
+                                                onStopSpeaking()
+                                            } else {
+                                                onSpeakQuestion(q?.question ?: "")
+                                            }
+                                        }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .testTag("speak_question_button")
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(if (isTtsSpeaking) "⏹️" else if (isTtsEnabled) "🔊" else "🔈", fontSize = 11.sp)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = if (isTtsSpeaking) "Hentikan Suara" else if (isTtsEnabled) "Bacakan Soal" else "TTS Nonaktif",
+                                            color = if (isTtsSpeaking) NeonPurple else if (isTtsEnabled) NeonCyan else Color(0xFF94A3B8),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+
                             Text(
                                 text = "+${q?.points ?: 100} Poin",
                                 color = NeonAmber,

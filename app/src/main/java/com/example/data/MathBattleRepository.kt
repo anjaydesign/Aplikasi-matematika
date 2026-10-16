@@ -165,7 +165,42 @@ class MathBattleRepository(private val database: AppDatabase) {
 
     suspend fun toggleAudio(enabled: Boolean) {
         val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(soundEnabled = enabled, musicEnabled = enabled))
+    }
+
+    suspend fun toggleMusic(enabled: Boolean) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(musicEnabled = enabled))
+    }
+
+    suspend fun toggleSound(enabled: Boolean) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
         userDao.insertOrUpdateProfile(profile.copy(soundEnabled = enabled))
+    }
+
+    suspend fun toggleTts(enabled: Boolean) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(ttsEnabled = enabled))
+    }
+
+    suspend fun toggleTtsAutoRead(enabled: Boolean) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(ttsAutoRead = enabled))
+    }
+
+    suspend fun setMusicVolume(volume: Float) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(musicVolume = volume))
+    }
+
+    suspend fun setSoundVolume(volume: Float) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(soundVolume = volume))
+    }
+
+    suspend fun setTtsSpeechRate(rate: Float) {
+        val profile = userDao.getUserProfileOnce() ?: UserProfileEntity()
+        userDao.insertOrUpdateProfile(profile.copy(ttsSpeechRate = rate))
     }
 
     suspend fun toggleVibration(enabled: Boolean) {

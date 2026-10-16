@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.audio.SoundAndHapticManager
+import com.example.audio.TextToSpeechManager
+import com.example.audio.TtsState
 import com.example.data.AppDatabase
 import com.example.data.MathBattleRepository
 import com.example.data.UserProfileEntity
@@ -67,11 +69,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getInstance(application)
     val repository = MathBattleRepository(database)
     val audioManager = SoundAndHapticManager(application)
+    val ttsManager = TextToSpeechManager(application)
 
     val currentScreen = MutableStateFlow<Screen>(Screen.Splash)
 
     val userProfile: StateFlow<UserProfileEntity?> = repository.userProfile
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val ttsState: StateFlow<TtsState> = ttsManager.ttsState
 
     val allAchievements = repository.allAchievements
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -109,8 +114,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.initializeDefaultsIfNeeded()
             delay(1200) // Splash animation duration
-            val profile = repository.userProfile
-            // Check if user already has selected level
             currentScreen.value = Screen.MainMenu
         }
     }
@@ -147,7 +150,94 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleAudio(enabled: Boolean) {
         viewModelScope.launch {
             repository.toggleAudio(enabled)
+            if (!enabled) {
+                audioManager.stopBgm()
+                ttsManager.stop()
+            }
         }
+    }
+
+    fun toggleMusic(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.toggleMusic(enabled)
+            val profile = userProfile.value
+            val vol = profile?.musicVolume ?: 0.7f
+            if (_battleState.value.isActive) {
+                if (enabled) {
+                    audioManager.startBgm(true, vol)
+                } else {
+                    audioManager.stopBgm()
+                }
+            }
+        }
+    }
+
+    fun toggleSound(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.toggleSound(enabled)
+        }
+    }
+
+    fun toggleTts(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.toggleTts(enabled)
+            if (!enabled) {
+                ttsManager.stop()
+            }
+        }
+    }
+
+    fun toggleTtsAutoRead(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.toggleTtsAutoRead(enabled)
+        }
+    }
+
+    fun setMusicVolume(volume: Float) {
+        viewModelScope.launch {
+            repository.setMusicVolume(volume)
+            audioManager.setBgmVolume(volume)
+        }
+    }
+
+    fun setSoundVolume(volume: Float) {
+        viewModelScope.launch {
+            repository.setSoundVolume(volume)
+        }
+    }
+
+    fun setTtsSpeechRate(rate: Float) {
+        viewModelScope.launch {
+            repository.setTtsSpeechRate(rate)
+            ttsManager.setSpeechRate(rate)
+        }
+    }
+
+    fun playButtonClick() {
+        val profile = userProfile.value
+        val soundVol = profile?.soundVolume ?: 0.8f
+        audioManager.playClick(
+            profile?.soundEnabled ?: true,
+            soundVol,
+            profile?.vibrationEnabled ?: true
+        )
+    }
+
+    fun testAudioSample(sampleText: String = "Dua belas ditambah delapan sama dengan berapa?") {
+        val profile = userProfile.value
+        val soundVol = profile?.soundVolume ?: 0.8f
+        audioManager.playCorrect(profile?.soundEnabled ?: true, soundVol, profile?.vibrationEnabled ?: true)
+        ttsManager.speak(sampleText, profile?.ttsEnabled ?: true)
+    }
+
+    fun speakQuestion(text: String) {
+        val profile = userProfile.value
+        ttsManager.setSpeechRate(profile?.ttsSpeechRate ?: 1.0f)
+        ttsManager.speak(text, profile?.ttsEnabled ?: true)
+    }
+
+    fun stopSpeaking() {
+        ttsManager.stop()
     }
 
     fun toggleVibration(enabled: Boolean) {
@@ -160,12 +250,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.claimQuestReward(questId)
             val profile = userProfile.value
-            audioManager.playVictory(profile?.soundEnabled ?: true, profile?.vibrationEnabled ?: true)
+            audioManager.playVictory(profile?.soundEnabled ?: true, profile?.soundVolume ?: 0.8f, profile?.vibrationEnabled ?: true)
         }
     }
 
     fun resetAllData() {
         viewModelScope.launch {
+            audioManager.stopBgm()
+            ttsManager.stop()
             repository.resetAllProgress()
             currentScreen.value = Screen.Onboarding
         }
@@ -253,6 +345,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         currentScreen.value = Screen.Battle
         startBattleTimer()
 
+        // Audio & TTS initializations
+        audioManager.startBgm(profile.musicEnabled, profile.musicVolume)
+        audioManager.playStart(profile.soundEnabled, profile.soundVolume, profile.vibrationEnabled)
+        if (profile.ttsEnabled && profile.ttsAutoRead) {
+            speakQuestion(firstQuestion.question)
+        }
+
         if (mode == GameMode.AI_DUEL) {
             triggerAITurn()
         }
@@ -285,9 +384,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun handleTimeExpired() {
+        ttsManager.stop()
         val current = _battleState.value
         val profile = userProfile.value
-        audioManager.playWrong(profile?.soundEnabled ?: true, profile?.vibrationEnabled ?: true)
+        val soundVol = profile?.soundVolume ?: 0.8f
+        audioManager.playWrong(profile?.soundEnabled ?: true, soundVol, profile?.vibrationEnabled ?: true)
 
         if (current.mode == GameMode.TIME_ATTACK) {
             // Time Attack ends when total timer hits 0
@@ -333,7 +434,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val current = _battleState.value
         val q = current.currentQuestion ?: return
         val profile = userProfile.value
+        // Stop ongoing question speech when user answers
+        ttsManager.stop()
+
         val isSound = profile?.soundEnabled ?: true
+        val soundVol = profile?.soundVolume ?: 0.8f
         val isVibe = profile?.vibrationEnabled ?: true
 
         val isCorrect = selected != null && selected == q.correctAnswer
@@ -349,9 +454,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         // Audio & Haptics
         if (isCorrect) {
-            audioManager.playCorrect(isSound, isVibe)
+            audioManager.playCorrect(isSound, soundVol, isVibe)
         } else {
-            audioManager.playWrong(isSound, isVibe)
+            audioManager.playWrong(isSound, soundVol, isVibe)
         }
 
         // Record review item
@@ -374,7 +479,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var updatedBoss = current.boss
         if (current.mode == GameMode.BOSS_BATTLE) {
             if (isCorrect && updatedBoss != null) {
-                audioManager.playBossHit(isSound, isVibe)
+                audioManager.playBossHit(isSound, soundVol, isVibe)
                 val newHp = (updatedBoss.currentHp - 1).coerceAtLeast(0)
                 updatedBoss = updatedBoss.copy(currentHp = newHp)
             }
@@ -448,6 +553,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val current = _battleState.value
         if (!current.isActive) return
 
+        ttsManager.stop()
+
         val nextQuestion = MathGenerator.generateQuestion(current.level, current.difficulty, current.topic)
         val resetTime = when (current.mode) {
             GameMode.TIME_ATTACK -> current.timeRemainingSec // Keep running total time
@@ -466,22 +573,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             maxTimeSec = resetTime
         )
 
+        // Auto read next question if enabled
+        val profile = userProfile.value
+        if (profile?.ttsEnabled == true && profile.ttsAutoRead) {
+            speakQuestion(nextQuestion.question)
+        }
+
         if (current.mode == GameMode.AI_DUEL) {
             triggerAITurn()
         }
     }
 
     fun pauseBattle() {
+        audioManager.pauseBgm()
+        ttsManager.stop()
         _battleState.value = _battleState.value.copy(isPaused = true)
     }
 
     fun resumeBattle() {
+        val profile = userProfile.value
+        audioManager.resumeBgm(profile?.musicEnabled ?: true, profile?.musicVolume ?: 0.7f)
         _battleState.value = _battleState.value.copy(isPaused = false)
     }
 
     fun finishBattle(isWin: Boolean = true, bossDefeated: Boolean = false) {
         timerJob?.cancel()
         aiDuelJob?.cancel()
+        audioManager.stopBgm()
+        ttsManager.stop()
+
         val current = _battleState.value
         val duration = ((System.currentTimeMillis() - battleStartTime) / 1000).toInt()
 
@@ -523,13 +643,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         val profile = userProfile.value
-        audioManager.playVictory(profile?.soundEnabled ?: true, profile?.vibrationEnabled ?: true)
+        val soundVol = profile?.soundVolume ?: 0.8f
+        audioManager.playVictory(profile?.soundEnabled ?: true, soundVol, profile?.vibrationEnabled ?: true)
         currentScreen.value = Screen.BattleResult
     }
 
     fun exitBattleToMainMenu() {
         timerJob?.cancel()
         aiDuelJob?.cancel()
+        audioManager.stopBgm()
+        ttsManager.stop()
         _battleState.value = _battleState.value.copy(isActive = false)
         currentScreen.value = Screen.MainMenu
     }
@@ -539,5 +662,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         timerJob?.cancel()
         aiDuelJob?.cancel()
         audioManager.release()
+        ttsManager.shutdown()
     }
 }

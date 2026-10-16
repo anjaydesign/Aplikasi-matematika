@@ -14,7 +14,13 @@ data class UserProfileEntity(
     val coins: Int = 100,
     val selectedAvatar: String = "⚡",
     val selectedTheme: String = "CYBER_NEON",
+    val musicEnabled: Boolean = true,
     val soundEnabled: Boolean = true,
+    val ttsEnabled: Boolean = true,
+    val ttsAutoRead: Boolean = true,
+    val musicVolume: Float = 0.7f,
+    val soundVolume: Float = 0.8f,
+    val ttsSpeechRate: Float = 1.0f,
     val vibrationEnabled: Boolean = true
 )
 
