@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Math Battle Offline"
+rootProject.name = "Math Battle"
 
 include(":app")

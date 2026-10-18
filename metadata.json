@@ -1,6 +1,6 @@
 {
   "name": "Math Battle Offline",
-  "description": "Game kuis matematika kompetitif offline untuk semua jenjang dengan aneka mode permainan, duel AI, dan boss battle.",
+  "description": "Permainan matematika edukatif offline dengan mode Single Player dan Multiplayer (Pass-and-Play Satu HP & Mabar Wi-Fi Lokal 2-4 Pemain)",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
