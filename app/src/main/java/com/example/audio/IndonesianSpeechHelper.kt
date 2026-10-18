@@ -37,7 +37,6 @@ class IndonesianSpeechHelper(context: Context) : TextToSpeech.OnInitListener {
                 _isAvailableFlow.value = true
                 selectIndonesianFemaleVoice(localeIndo)
             } else {
-                // Fallback to default
                 tts?.setLanguage(Locale.getDefault())
                 isInitialized = true
                 _isAvailableFlow.value = true
@@ -70,7 +69,6 @@ class IndonesianSpeechHelper(context: Context) : TextToSpeech.OnInitListener {
     private fun selectIndonesianFemaleVoice(locale: Locale) {
         try {
             val voices = tts?.voices ?: return
-            // Look for female voice with "id" language
             val femaleVoice = voices.firstOrNull { voice: Voice ->
                 voice.locale.language == locale.language &&
                         (voice.name.contains("female", ignoreCase = true) ||
@@ -80,8 +78,8 @@ class IndonesianSpeechHelper(context: Context) : TextToSpeech.OnInitListener {
             } ?: voices.firstOrNull { it.locale.language == locale.language }
 
             femaleVoice?.let { tts?.voice = it }
-            tts?.setPitch(1.05f) // Slightly higher friendly pitch
-            tts?.setSpeechRate(0.95f) // Clear child-friendly pacing
+            tts?.setPitch(1.05f)
+            tts?.setSpeechRate(0.95f)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -135,7 +133,6 @@ class IndonesianSpeechHelper(context: Context) : TextToSpeech.OnInitListener {
                 .replace("...", " titik titik ")
                 .replace("·", " kali ")
 
-            // Fractions like 1/2, 3/4
             text = text.replace(Regex("(\\d+)/(\\d+)")) { match ->
                 val num = match.groupValues[1]
                 val den = match.groupValues[2]
@@ -146,7 +143,6 @@ class IndonesianSpeechHelper(context: Context) : TextToSpeech.OnInitListener {
                 }
             }
 
-            // Decimal numbers like 2.5 or 0.5
             text = text.replace(Regex("(\\d+)\\.(\\d+)")) { match ->
                 "${match.groupValues[1]} koma ${match.groupValues[2]}"
             }

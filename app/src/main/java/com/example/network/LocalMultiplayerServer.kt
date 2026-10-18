@@ -49,7 +49,6 @@ class LocalMultiplayerServer(
 
                 while (isActive && !serverSocket!!.isClosed) {
                     val socket = serverSocket!!.accept()
-                    // Limit max connections to 4 clients
                     if (clients.size >= 4) {
                         try {
                             val pw = PrintWriter(socket.getOutputStream(), true)
@@ -76,7 +75,6 @@ class LocalMultiplayerServer(
                     clients[socketId] = conn
                     onClientConnected(socketId)
 
-                    // Start read loop for this client
                     launchReadLoop(conn)
                 }
             } catch (e: Exception) {
@@ -117,7 +115,7 @@ class LocalMultiplayerServer(
                     }
                 }
             } catch (e: Exception) {
-                // Connection lost or closed
+                // Connection closed
             } finally {
                 disconnectClient(conn.socketId)
             }

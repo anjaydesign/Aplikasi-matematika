@@ -2,7 +2,6 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary vibrant blue & indigo
 val PrimaryBlue = Color(0xFF2563EB)
 val PrimaryBlueDark = Color(0xFF1D4ED8)
 val PrimaryBlueLight = Color(0xFFDBEAFE)
@@ -21,7 +20,6 @@ val SurfaceCard = Color(0xFFFFFFFF)
 val TextDark = Color(0xFF0F172A)
 val TextMuted = Color(0xFF64748B)
 
-// Dark theme colors
 val DarkBackground = Color(0xFF0F172A)
 val DarkSurface = Color(0xFF1E293B)
 val DarkCard = Color(0xFF334155)

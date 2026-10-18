@@ -11,13 +11,13 @@ data class PlayerProfileEntity(
     val xp: Int = 0,
     val level: Int = 1,
     val selectedAvatar: Int = 0,
-    val unlockedAvatars: String = "0,1" // Comma-separated indices
+    val unlockedAvatars: String = "0,1"
 )
 
 @Entity(tableName = "match_history")
 data class MatchHistoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val mode: String, // "SATU_HP", "WIFI_LOKAL", "SOLO_RACING", "BOSS_BATTLE", "SURVIVAL", "STREAK"
+    val mode: String,
     val playerCount: Int,
     val winnerName: String,
     val rankingsJson: String,

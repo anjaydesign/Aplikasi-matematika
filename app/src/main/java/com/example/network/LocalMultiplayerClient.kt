@@ -46,9 +46,7 @@ class LocalMultiplayerClient(
                     onConnected()
                 }
 
-                // Start read loop
                 startReadLoop()
-                // Start heartbeat
                 startPingLoop()
 
             } catch (e: Exception) {

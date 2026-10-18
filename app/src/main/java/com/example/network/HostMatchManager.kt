@@ -54,7 +54,6 @@ class HostMatchManager(
     var currentSettings = MatchSettings()
 
     init {
-        // Add host as player 1
         val hostPlayer = ConnectedPlayer(
             id = hostId,
             name = hostName,
@@ -209,7 +208,6 @@ class HostMatchManager(
         )
         currentQuestionIndex = 0
 
-        // Reset scores
         players.forEach { p ->
             scores[p.id] = PlayerScore(
                 playerId = p.id,
@@ -247,7 +245,6 @@ class HostMatchManager(
         roundStartTimeMs = System.currentTimeMillis()
         currentState = State.ROUND_ACTIVE
 
-        // CRITICAL: Send Question to all players WITHOUT leaking correctAnswer!
         val clientPayload = QuestionClientPayload(
             questionId = q.id,
             roundIndex = questionIndex + 1,
@@ -271,10 +268,9 @@ class HostMatchManager(
         )
         onMatchStateChanged()
 
-        // Authoritative server timer
         timerJob?.cancel()
         timerJob = scope.launch {
-            val totalWaitMs = (currentSettings.timePerQuestionSeconds * 1000L) + 1200L // Small buffer for network latency
+            val totalWaitMs = (currentSettings.timePerQuestionSeconds * 1000L) + 1200L
             delay(totalWaitMs)
             if (isActive && currentState == State.ROUND_ACTIVE) {
                 endRound()
@@ -287,13 +283,11 @@ class HostMatchManager(
         val currentQ = currentQuestion ?: return
 
         val payload = AnswerSubmissionPayload.fromJson(JSONObject(message.payloadJson))
-        if (payload.questionId != currentQ.id) return // Message from old round, ignore
+        if (payload.questionId != currentQ.id) return
 
-        // Guarantee: only the FIRST answer per player is counted
         if (answersThisRound.containsKey(message.senderId)) return
         answersThisRound[message.senderId] = payload
 
-        // Evaluate answer
         val isCorrect = payload.selectedAnswer.trim() == currentQ.correctAnswer.trim()
         val playerScore = scores[message.senderId] ?: return
 
@@ -321,7 +315,6 @@ class HostMatchManager(
         }
         playerScore.totalTimeSpentMs += timeSpent
 
-        // Send individual answer result to the answering player
         val answerResult = AnswerResultPayload(
             questionId = currentQ.id,
             roundIndex = currentQuestionIndex + 1,
@@ -346,11 +339,9 @@ class HostMatchManager(
             )
         }
 
-        // Broadcast score update to everyone
         broadcastScoreUpdate()
         onMatchStateChanged()
 
-        // If all connected players have answered, end round early
         if (answersThisRound.size >= players.size) {
             timerJob?.cancel()
             scope.launch {
@@ -382,7 +373,6 @@ class HostMatchManager(
         currentState = State.ROUND_REVIEW
         val currentQ = currentQuestion ?: return
 
-        // Reveal answer and explanation to all players
         val revealResult = AnswerResultPayload(
             questionId = currentQ.id,
             roundIndex = currentQuestionIndex + 1,
@@ -405,7 +395,6 @@ class HostMatchManager(
         broadcastScoreUpdate()
         onMatchStateChanged()
 
-        // Wait 3.5 seconds review then move to next round
         timerJob?.cancel()
         timerJob = scope.launch {
             delay(3500)
@@ -460,10 +449,6 @@ class HostMatchManager(
         currentState = State.FINISHED
         timerJob?.cancel()
 
-        // Strict tiebreaker logic per Section 6:
-        // 1. Highest score
-        // 2. Most correct answers
-        // 3. Lowest total response time
         val rankedList = scores.values.toList().sortedWith(
             compareByDescending<PlayerScore> { it.score }
                 .thenByDescending { it.correctAnswersCount }
@@ -515,7 +500,6 @@ class HostMatchManager(
             broadcastScoreUpdate()
             onMatchStateChanged()
 
-            // If match is active and only 1 player remains, finish match safely
             if (currentState == State.ROUND_ACTIVE || currentState == State.ROUND_REVIEW) {
                 if (players.size < 2) {
                     finishMatch()

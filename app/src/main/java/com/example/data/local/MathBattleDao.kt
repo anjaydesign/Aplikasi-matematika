@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MathBattleDao {
 
-    // Profile
     @Query("SELECT * FROM player_profile WHERE id = :id")
     fun getProfileFlow(id: String = "local_player"): Flow<PlayerProfileEntity?>
 
@@ -20,7 +19,6 @@ interface MathBattleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateProfile(profile: PlayerProfileEntity)
 
-    // Match History
     @Query("SELECT * FROM match_history ORDER BY timestamp DESC LIMIT 50")
     fun getAllMatchHistory(): Flow<List<MatchHistoryEntity>>
 
@@ -30,7 +28,6 @@ interface MathBattleDao {
     @Query("DELETE FROM match_history")
     suspend fun clearHistory()
 
-    // Audio Settings
     @Query("SELECT * FROM audio_settings WHERE id = 1")
     fun getAudioSettingsFlow(): Flow<AudioSettingsEntity?>
 
@@ -40,7 +37,6 @@ interface MathBattleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveAudioSettings(settings: AudioSettingsEntity)
 
-    // Quests
     @Query("SELECT * FROM daily_quests")
     fun getAllQuests(): Flow<List<DailyQuestEntity>>
 

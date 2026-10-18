@@ -12,7 +12,6 @@ object NetworkUtils {
 
     fun getLocalIpAddress(context: Context? = null): String {
         try {
-            // First attempt: check NetworkInterface for non-loopback site-local IPv4
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (intf in interfaces) {
                 if (intf.isLoopback || !intf.isUp) continue
@@ -30,7 +29,6 @@ object NetworkUtils {
             e.printStackTrace()
         }
 
-        // Second attempt: WifiManager IP
         if (context != null) {
             try {
                 val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
@@ -52,14 +50,9 @@ object NetworkUtils {
         return "127.0.0.1"
     }
 
-    /**
-     * Converts an IP like "192.168.1.45" and port 8888 into a readable Room Code
-     * or allows entering direct IP.
-     */
     fun ipToRoomCode(ip: String): String {
         val parts = ip.split(".")
         return if (parts.size == 4) {
-            // Take last two octets formatted e.g. "1-45"
             "${parts[2]}-${parts[3]}"
         } else {
             ip
@@ -68,7 +61,7 @@ object NetworkUtils {
 
     fun roomCodeToIp(baseSubnet: String, code: String): String {
         val clean = code.trim()
-        if (clean.contains(".")) return clean // Already full IP
+        if (clean.contains(".")) return clean
         val subParts = baseSubnet.split(".")
         if (subParts.size >= 2 && clean.contains("-")) {
             val codeParts = clean.split("-")

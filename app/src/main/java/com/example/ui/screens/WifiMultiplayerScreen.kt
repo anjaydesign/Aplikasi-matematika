@@ -2,7 +2,6 @@ package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,9 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.Difficulty
 import com.example.data.model.MatchSettings
-import com.example.data.model.MathCategory
 import com.example.ui.components.AnimatedTimerBar
 import com.example.ui.components.AnswerOptionButton
 import com.example.ui.components.AvatarHelper
@@ -139,7 +136,6 @@ fun WifiMenuScreen(viewModel: MathBattleViewModel) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Button 1: Buat Ruangan (Host)
                     Button(
                         onClick = { viewModel.initHostRoom() },
                         shape = RoundedCornerShape(16.dp),
@@ -160,7 +156,6 @@ fun WifiMenuScreen(viewModel: MathBattleViewModel) {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Button 2: Gabung Ruangan (Klien)
                     Button(
                         onClick = { viewModel.navigateTo(AppScreen.WIFI_JOIN_INPUT) },
                         shape = RoundedCornerShape(16.dp),
@@ -214,7 +209,6 @@ fun WifiHostLobbyScreen(viewModel: MathBattleViewModel) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Room Connection Info Card
             ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.elevatedCardColors(
@@ -266,7 +260,6 @@ fun WifiHostLobbyScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Connected Players List Card (2-4 Pemain)
             ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.elevatedCardColors(
@@ -351,7 +344,6 @@ fun WifiHostLobbyScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Match Configuration
             ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.elevatedCardColors(
@@ -797,9 +789,7 @@ fun WifiGameScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Options
             currentQ?.options?.forEachIndexed { index, opt ->
-                val isSelected = hasSubmitted // highlight if answered
                 AnswerOptionButton(
                     optionText = opt,
                     index = index,
@@ -863,7 +853,6 @@ fun WifiGameScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Live Standings preview
             if (scores.isNotEmpty()) {
                 Surface(
                     shape = RoundedCornerShape(14.dp),
@@ -878,7 +867,7 @@ fun WifiGameScreen(viewModel: MathBattleViewModel) {
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        scores.take(4).forEachIndexed { i, s ->
+                        scores.take(4).forEachIndexed { _, s ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(text = AvatarHelper.getEmoji(s.avatarIndex), fontSize = 18.sp)
                                 Text(

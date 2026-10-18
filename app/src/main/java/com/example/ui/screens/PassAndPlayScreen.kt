@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Difficulty
 import com.example.data.model.MathCategory
-import com.example.data.model.MathGrade
 import com.example.ui.components.AnimatedTimerBar
 import com.example.ui.components.AnswerOptionButton
 import com.example.ui.components.AvatarHelper
@@ -86,7 +85,6 @@ fun PassAndPlaySetupScreen(viewModel: MathBattleViewModel) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Jumlah Pemain Selector (2, 3, 4)
             ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.elevatedCardColors(
@@ -132,7 +130,6 @@ fun PassAndPlaySetupScreen(viewModel: MathBattleViewModel) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Player names inputs
                     Text(
                         text = "Nama & Avatar Pemain:",
                         fontWeight = FontWeight.SemiBold,
@@ -177,7 +174,6 @@ fun PassAndPlaySetupScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Math Options Card
             ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.elevatedCardColors(
@@ -244,7 +240,6 @@ fun PassAndPlaySetupScreen(viewModel: MathBattleViewModel) {
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Jumlah Soal & Waktu
                     Text(
                         text = "Jumlah Soal & Waktu per Giliran",
                         fontWeight = FontWeight.Bold,
@@ -297,7 +292,6 @@ fun PassAndPlaySetupScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Start Match Button
             Button(
                 onClick = { viewModel.startPassAndPlayMatch() },
                 shape = RoundedCornerShape(16.dp),
@@ -350,7 +344,6 @@ fun PassAndPlayGameScreen(viewModel: MathBattleViewModel) {
             onBackClick = { viewModel.navigateTo(AppScreen.MAIN_MENU) }
         )
 
-        // IF WAITING FOR TURN CONFIRMATION: Show Transition screen to prevent leaking answer!
         if (isWaitingConfirmation) {
             Column(
                 modifier = Modifier
@@ -447,14 +440,12 @@ fun PassAndPlayGameScreen(viewModel: MathBattleViewModel) {
                 }
             }
         } else {
-            // ACTIVE QUESTION SCREEN
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Active player header banner
                 Surface(
                     shape = RoundedCornerShape(14.dp),
                     color = PrimaryBlue.copy(alpha = 0.12f),
@@ -510,7 +501,6 @@ fun PassAndPlayGameScreen(viewModel: MathBattleViewModel) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Options (A, B, C, D)
                 currentQuestion?.options?.forEachIndexed { index, opt ->
                     AnswerOptionButton(
                         optionText = opt,
@@ -569,7 +559,6 @@ fun PassAndPlayResultScreen(viewModel: MathBattleViewModel) {
         ) {
             val winner = rankings.firstOrNull()
 
-            // Podium Card
             ElevatedCard(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.elevatedCardColors(
@@ -626,7 +615,6 @@ fun PassAndPlayResultScreen(viewModel: MathBattleViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Complete Leaderboard
             Text(
                 text = "KLASEMEN AKHIR",
                 fontWeight = FontWeight.Bold,

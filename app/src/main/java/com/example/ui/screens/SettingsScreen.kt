@@ -1,10 +1,8 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,549 +12,423 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.audio.TtsState
-import com.example.data.UserProfileEntity
-import com.example.model.Difficulty
-import com.example.model.EducationLevel
-import com.example.ui.components.TopGameBar
-import com.example.ui.theme.BgDark
-import com.example.ui.theme.NeonAmber
-import com.example.ui.theme.NeonCyan
-import com.example.ui.theme.NeonGreen
-import com.example.ui.theme.NeonPurple
-import com.example.ui.theme.NeonRed
-import com.example.ui.theme.SurfaceDark
-import com.example.ui.theme.SurfaceElevated
+import com.example.ui.components.ScreenHeader
+import com.example.ui.theme.AccentGold
+import com.example.ui.theme.PrimaryBlue
+import com.example.ui.theme.SecondaryPurple
+import com.example.ui.theme.SuccessGreen
+import com.example.viewmodel.AppScreen
+import com.example.viewmodel.MathBattleViewModel
 
 @Composable
-fun SettingsScreen(
-    profile: UserProfileEntity?,
-    ttsState: TtsState,
-    onBack: () -> Unit,
-    onSelectLevel: (EducationLevel) -> Unit,
-    onSelectDifficulty: (Difficulty) -> Unit,
-    onToggleMusic: (Boolean) -> Unit,
-    onToggleSound: (Boolean) -> Unit,
-    onToggleTts: (Boolean) -> Unit,
-    onToggleTtsAutoRead: (Boolean) -> Unit,
-    onSetMusicVolume: (Float) -> Unit,
-    onSetSoundVolume: (Float) -> Unit,
-    onSetTtsSpeechRate: (Float) -> Unit,
-    onTestAudio: () -> Unit,
-    onToggleVibration: (Boolean) -> Unit,
-    onResetData: () -> Unit
-) {
-    val currentLevel = EducationLevel.fromCode(profile?.selectedLevelCode ?: "SD")
-    val currentDiff = Difficulty.fromCode(profile?.selectedDifficultyCode ?: "NORMAL")
-    var showResetDialog by remember { mutableStateOf(false) }
+fun SettingsScreen(viewModel: MathBattleViewModel) {
+    BackHandler {
+        viewModel.navigateTo(AppScreen.MAIN_MENU)
+    }
 
-    Scaffold(
-        containerColor = BgDark,
-        topBar = {
-            TopGameBar(
-                title = "Pengaturan",
-                onBack = onBack
-            )
-        }
-    ) { innerPadding ->
-        LazyColumn(
+    val audioSettings by viewModel.audioSettings.collectAsState()
+    val scrollState = rememberScrollState()
+
+    var sfxEnabled by remember(audioSettings) { mutableStateOf(audioSettings?.sfxEnabled ?: true) }
+    var bgmEnabled by remember(audioSettings) { mutableStateOf(audioSettings?.bgmEnabled ?: true) }
+    var ttsEnabled by remember(audioSettings) { mutableStateOf(audioSettings?.ttsEnabled ?: true) }
+    var ttsAutoRead by remember(audioSettings) { mutableStateOf(audioSettings?.ttsAutoRead ?: true) }
+    var sfxVolume by remember(audioSettings) { mutableFloatStateOf(audioSettings?.sfxVolume ?: 0.8f) }
+    var bgmVolume by remember(audioSettings) { mutableFloatStateOf(audioSettings?.bgmVolume ?: 0.5f) }
+
+    fun syncAudio() {
+        viewModel.updateAudioSettings(
+            sfxEnabled = sfxEnabled,
+            bgmEnabled = bgmEnabled,
+            ttsEnabled = ttsEnabled,
+            ttsAutoRead = ttsAutoRead,
+            sfxVolume = sfxVolume,
+            bgmVolume = bgmVolume
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        ScreenHeader(
+            title = "Pengaturan & Panduan",
+            onBackClick = { viewModel.navigateTo(AppScreen.MAIN_MENU) }
+        )
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // =================================================================
-            // 1. PENGATURAN AUDIO LENGKAP
-            // =================================================================
-            item {
-                Text(
-                    text = "Pengaturan Suara & Audio",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SurfaceDark)
-                        .border(1.dp, NeonCyan.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        // 1. Musik Latar ON/OFF
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Musik Latar (BGM)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text("Instrumen ceria saat bermain kuis", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                            }
-                            Switch(
-                                checked = profile?.musicEnabled ?: true,
-                                onCheckedChange = onToggleMusic,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = NeonCyan,
-                                    checkedTrackColor = Color(0xFF004E5C)
-                                ),
-                                modifier = Modifier.testTag("switch_music_bgm")
-                            )
-                        }
-
-                        // Slider Volume Musik (0 - 100%)
-                        if (profile?.musicEnabled != false) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Volume Musik", color = Color(0xFFCBD5E1), fontSize = 12.sp)
-                                    val musicPct = ((profile?.musicVolume ?: 0.7f) * 100).toInt()
-                                    Text("$musicPct%", color = NeonCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                }
-                                Slider(
-                                    value = profile?.musicVolume ?: 0.7f,
-                                    onValueChange = onSetMusicVolume,
-                                    valueRange = 0.0f..1.0f,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = NeonCyan,
-                                        activeTrackColor = NeonCyan,
-                                        inactiveTrackColor = Color(0xFF1E293B)
-                                    ),
-                                    modifier = Modifier.testTag("slider_music_volume")
-                                )
-                            }
-                        }
-
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1E293B)))
-
-                        // 2. Efek Suara ON/OFF
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Efek Suara (SFX)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text("Suara tombol, benar, salah, dan kemenangan", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                            }
-                            Switch(
-                                checked = profile?.soundEnabled ?: true,
-                                onCheckedChange = onToggleSound,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = NeonAmber,
-                                    checkedTrackColor = Color(0xFF5A3E00)
-                                ),
-                                modifier = Modifier.testTag("switch_sound_sfx")
-                            )
-                        }
-
-                        // Slider Volume Efek Suara (0 - 100%)
-                        if (profile?.soundEnabled != false) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Volume Efek Suara", color = Color(0xFFCBD5E1), fontSize = 12.sp)
-                                    val soundPct = ((profile?.soundVolume ?: 0.8f) * 100).toInt()
-                                    Text("$soundPct%", color = NeonAmber, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                }
-                                Slider(
-                                    value = profile?.soundVolume ?: 0.8f,
-                                    onValueChange = onSetSoundVolume,
-                                    valueRange = 0.0f..1.0f,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = NeonAmber,
-                                        activeTrackColor = NeonAmber,
-                                        inactiveTrackColor = Color(0xFF1E293B)
-                                    ),
-                                    modifier = Modifier.testTag("slider_sound_volume")
-                                )
-                            }
-                        }
-
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1E293B)))
-
-                        // 3. Pembaca Soal (TTS Bahasa Indonesia) ON/OFF
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Pembaca Soal Suara (TTS)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text("Membacakan pertanyaan matematika berbahasa Indonesia", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                            }
-                            Switch(
-                                checked = profile?.ttsEnabled ?: true,
-                                onCheckedChange = onToggleTts,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = NeonPurple,
-                                    checkedTrackColor = Color(0xFF3B1E6D)
-                                ),
-                                modifier = Modifier.testTag("switch_tts")
-                            )
-                        }
-
-                        // 4. Bacakan Soal Otomatis ON/OFF
-                        if (profile?.ttsEnabled != false) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Bacakan Soal Otomatis", color = Color(0xFFE2E8F0), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                    Text("Langsung membacakan saat soal baru muncul", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                                }
-                                Switch(
-                                    checked = profile?.ttsAutoRead ?: true,
-                                    onCheckedChange = onToggleTtsAutoRead,
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = NeonPurple,
-                                        checkedTrackColor = Color(0xFF3B1E6D)
-                                    ),
-                                    modifier = Modifier.testTag("switch_tts_auto")
-                                )
-                            }
-
-                            // 5. Kecepatan Pembaca Soal Slider (0.7x - 1.3x)
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Kecepatan Suara", color = Color(0xFFCBD5E1), fontSize = 12.sp)
-                                    val rate = profile?.ttsSpeechRate ?: 1.0f
-                                    Text(String.format(java.util.Locale.US, "%.1fx", rate), color = NeonPurple, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                }
-                                Slider(
-                                    value = profile?.ttsSpeechRate ?: 1.0f,
-                                    onValueChange = onSetTtsSpeechRate,
-                                    valueRange = 0.7f..1.3f,
-                                    steps = 5,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = NeonPurple,
-                                        activeTrackColor = NeonPurple,
-                                        inactiveTrackColor = Color(0xFF1E293B)
-                                    ),
-                                    modifier = Modifier.testTag("slider_tts_rate")
-                                )
-                            }
-
-                            // Status Banner Voice TTS
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(
-                                        if (ttsState.isLanguageSupported) {
-                                            if (ttsState.isFemaleVoice) Color(0xFF132A3E) else Color(0xFF1E2433)
-                                        } else Color(0xFF3F1318)
-                                    )
-                                    .border(
-                                        1.dp,
-                                        if (ttsState.isLanguageSupported) {
-                                            if (ttsState.isFemaleVoice) NeonCyan.copy(alpha = 0.5f) else Color(0xFF38BDF8).copy(alpha = 0.5f)
-                                        } else NeonRed.copy(alpha = 0.5f),
-                                        RoundedCornerShape(10.dp)
-                                    )
-                                    .padding(10.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(if (ttsState.isFemaleVoice) "👩" else "🗣️", fontSize = 18.sp)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Column {
-                                        Text(
-                                            text = if (ttsState.isFemaleVoice) "Voice Perempuan Indonesia" else "Status Suara TTS",
-                                            color = if (ttsState.isLanguageSupported) NeonCyan else NeonRed,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp
-                                        )
-                                        Text(
-                                            text = ttsState.statusMessage,
-                                            color = Color(0xFF94A3B8),
-                                            fontSize = 10.sp
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        // Tombol Uji Suara (Test Sound)
-                        Button(
-                            onClick = onTestAudio,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1E293B),
-                                contentColor = NeonCyan
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(46.dp)
-                                .testTag("test_audio_button")
-                        ) {
-                            Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Uji Suara & Efek Sekarang", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
+            // Audio Settings Card
+            ElevatedCard(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MusicNote,
+                            contentDescription = null,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Pengaturan Musik & Efek Suara",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
                     }
-                }
-            }
 
-            // =================================================================
-            // 2. GETARAN HAPTIK
-            // =================================================================
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(SurfaceDark)
-                        .border(1.dp, Color(0xFF263352), RoundedCornerShape(14.dp))
-                        .padding(14.dp)
-                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // BGM Switch
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Getaran Haptik HP", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text("Sensasi getar saat menyentuh tombol & menjawab", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                            Text(text = "Musik Latar (BGM)", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                            Text(text = "Melodi santai saat bermain", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(
-                            checked = profile?.vibrationEnabled ?: true,
-                            onCheckedChange = onToggleVibration,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = NeonCyan,
-                                checkedTrackColor = Color(0xFF004E5C)
-                            )
+                            checked = bgmEnabled,
+                            onCheckedChange = {
+                                bgmEnabled = it
+                                syncAudio()
+                            },
+                            modifier = Modifier.testTag("switch_bgm")
                         )
                     }
-                }
-            }
 
-            // =================================================================
-            // 3. PILIHAN JENJANG
-            // =================================================================
-            item {
-                Text(
-                    text = "Pilih Jenjang Belajar",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    EducationLevel.entries.forEach { lvl ->
-                        val isSelected = lvl == currentLevel
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) Color(0xFF132A3E) else SurfaceElevated)
-                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) NeonCyan else Color(0xFF263352), RoundedCornerShape(12.dp))
-                                .clickable { onSelectLevel(lvl) }
-                                .padding(12.dp)
+                    if (bgmEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "Volume Musik: ${(bgmVolume * 100).toInt()}%", fontSize = 12.sp)
+                        Slider(
+                            value = bgmVolume,
+                            onValueChange = {
+                                bgmVolume = it
+                                syncAudio()
+                            },
+                            modifier = Modifier.testTag("slider_bgm_volume")
+                        )
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    // SFX Switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(text = "Efek Suara (SFX)", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                            Text(text = "Suara klik, benar, salah, dan kemenangan", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(
+                            checked = sfxEnabled,
+                            onCheckedChange = {
+                                sfxEnabled = it
+                                syncAudio()
+                            },
+                            modifier = Modifier.testTag("switch_sfx")
+                        )
+                    }
+
+                    if (sfxEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "Volume Efek Suara: ${(sfxVolume * 100).toInt()}%", fontSize = 12.sp)
+                        Slider(
+                            value = sfxVolume,
+                            onValueChange = {
+                                sfxVolume = it
+                                syncAudio()
+                            },
+                            modifier = Modifier.testTag("slider_sfx_volume")
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            OutlinedButton(
+                                onClick = { viewModel.soundManager.playCorrect() },
+                                modifier = Modifier.weight(1f).testTag("btn_test_sfx_correct")
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(lvl.iconEmoji, fontSize = 20.sp)
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = lvl.title,
-                                            color = if (isSelected) NeonCyan else Color.White,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp
-                                        )
-                                        Text(
-                                            text = lvl.subtitle,
-                                            color = Color(0xFF94A3B8),
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-                                if (isSelected) {
-                                    Text("✓ Aktif", color = NeonCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                }
+                                Text("Uji Benar", fontSize = 12.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { viewModel.soundManager.playWrong() },
+                                modifier = Modifier.weight(1f).testTag("btn_test_sfx_wrong")
+                            ) {
+                                Text("Uji Salah", fontSize = 12.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { viewModel.soundManager.playVictory() },
+                                modifier = Modifier.weight(1f).testTag("btn_test_sfx_victory")
+                            ) {
+                                Text("Uji Menang", fontSize = 12.sp)
                             }
                         }
                     }
-                }
-            }
 
-            // =================================================================
-            // 4. PILIHAN KESULITAN
-            // =================================================================
-            item {
-                Text(
-                    text = "Tingkat Kesulitan",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Difficulty.entries.forEach { diff ->
-                        val isSelected = diff == currentDiff
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) Color(diff.colorHex).copy(alpha = 0.25f) else SurfaceElevated)
-                                .border(if (isSelected) 2.dp else 1.dp, if (isSelected) Color(diff.colorHex) else Color(0xFF263352), RoundedCornerShape(10.dp))
-                                .clickable { onSelectDifficulty(diff) }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    // TTS Switch (Female Indonesian Voice)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.RecordVoiceOver,
+                                    contentDescription = null,
+                                    tint = SecondaryPurple,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Pembaca Soal Perempuan (Bahasa Indonesia)",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
+                            }
                             Text(
-                                text = diff.displayName,
-                                color = if (isSelected) Color(diff.colorHex) else Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
+                                text = "Membacakan rumus dan soal matematika otomatis dalam bahasa Indonesia",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                        Switch(
+                            checked = ttsEnabled,
+                            onCheckedChange = {
+                                ttsEnabled = it
+                                syncAudio()
+                            },
+                            modifier = Modifier.testTag("switch_tts")
+                        )
+                    }
+
+                    if (ttsEnabled) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "Bacakan Soal Otomatis Saat Muncul", fontSize = 13.sp)
+                            Switch(
+                                checked = ttsAutoRead,
+                                onCheckedChange = {
+                                    ttsAutoRead = it
+                                    syncAudio()
+                                },
+                                modifier = Modifier.testTag("switch_tts_autoread")
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                viewModel.speechHelper.speakMathPrompt("Halo! Saya asisten suara perempuan bahasa Indonesia. Siap bertanding matematika!")
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = SecondaryPurple),
+                            modifier = Modifier.fillMaxWidth().testTag("btn_test_female_tts")
+                        ) {
+                            Icon(imageVector = Icons.Default.VolumeUp, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Uji Suara Perempuan (Bahasa Indonesia)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
                 }
             }
 
-            // =================================================================
-            // 5. APP INFO & PRIVASI OFFLINE
-            // =================================================================
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(SurfaceElevated)
-                        .border(1.dp, Color(0xFF263352), RoundedCornerShape(14.dp))
-                        .padding(14.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "Math Battle Offline v1.1 • Audio Edition",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Rules & Scoring Fairness Card
+            ElevatedCard(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Rule,
+                            contentDescription = null,
+                            tint = AccentGold,
+                            modifier = Modifier.size(24.dp)
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "100% Offline • Musik & SFX Lokal • Text-to-Speech Bahasa Indonesia • Tanpa Internet",
-                            color = Color(0xFF94A3B8),
-                            fontSize = 11.sp
+                            text = "Sistem Penilaian & Keadilan Skor",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Aturan skor transparan dan konsisten untuk semua mode:",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    ScoreRuleItem(
+                        icon = "✅",
+                        title = "Jawaban Benar",
+                        desc = "Mendapatkan 100 Poin Dasar."
+                    )
+                    ScoreRuleItem(
+                        icon = "⚡",
+                        title = "Bonus Kecepatan",
+                        desc = "Sisa Detik x 3 Poin (dibatasi agar adil dan tidak melebihi poin dasar)."
+                    )
+                    ScoreRuleItem(
+                        icon = "🔥",
+                        title = "Bonus Rantai Streak",
+                        desc = "+10 Poin per kelipatan jawaban benar berturut-turut."
+                    )
+                    ScoreRuleItem(
+                        icon = "❌",
+                        title = "Jawaban Salah / Waktu Habis",
+                        desc = "0 Poin. Tidak ada pengurangan poin minus agar permainan tetap menyenangkan."
+                    )
+                    ScoreRuleItem(
+                        icon = "🤝",
+                        title = "Pemecah Hasil Seri",
+                        desc = "Jika total skor sama, ditentukan dari jumlah jawaban benar terbanyak, kemudian waktu tercepat."
+                    )
                 }
             }
 
-            // =================================================================
-            // 6. RESET DATA ACTION
-            // =================================================================
-            item {
-                Button(
-                    onClick = { showResetDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF3F1318),
-                        contentColor = NeonRed
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonRed.copy(alpha = 0.5f)),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .testTag("reset_progress_button")
-                ) {
-                    Text("Reset Seluruh Progres Permainan", fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Panduan Bermain Multiplayer
+            ElevatedCard(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = SuccessGreen,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Petunjuk Mode Multiplayer",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "1. Multiplayer Satu HP (Pass-and-Play):",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = PrimaryBlue
+                    )
+                    Text(
+                        text = "Pilih 2–4 nama pemain. Setiap pemain menjawab soal saat gilirannya. Layar transisi 'Giliran Pemain Berikutnya' melindungi kerahasiaan jawaban sebelum diserahkan ke teman berikutnya.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "2. Mabar Wi-Fi Lokal (Antar-HP):",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = SuccessGreen
+                    )
+                    Text(
+                        text = "Semua pemain harus berada di jaringan Wi-Fi yang sama ATAU satu pemain menyalakan Hotspot HP (tanpa kuota internet). Host memilih 'Buat Ruangan' dan pemain lain memilih 'Gabung Ruangan' memasukkan kode ruangan / IP Host.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
+}
 
-    if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            containerColor = SurfaceDark,
-            title = {
-                Text("Konfirmasi Reset Progres", color = NeonRed, fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Text(
-                    text = "Apakah kamu yakin ingin mereset seluruh data skor, XP, level, koin, riwayat pertandingan, dan lencana? Tindakan ini tidak dapat dibatalkan.",
-                    color = Color(0xFFCBD5E1)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onResetData()
-                        showResetDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = NeonRed,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Ya, Reset Semua", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = { showResetDialog = false },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF94A3B8)
-                    )
-                ) {
-                    Text("Batal")
-                }
-            }
-        )
+@Composable
+fun ScoreRuleItem(icon: String, title: String, desc: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(text = icon, fontSize = 16.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(text = title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(text = desc, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

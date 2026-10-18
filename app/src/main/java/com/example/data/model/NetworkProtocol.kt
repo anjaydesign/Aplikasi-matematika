@@ -84,7 +84,6 @@ data class NetworkMessage(
     }
 }
 
-// Payload helper data classes
 data class QuestionClientPayload(
     val questionId: String,
     val roundIndex: Int,

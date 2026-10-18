@@ -77,7 +77,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
     val soundManager = SoundAndHapticManager(application)
     val speechHelper = IndonesianSpeechHelper(application)
 
-    // Room DB StateFlows
     val profile: StateFlow<PlayerProfileEntity?> = repository.profileFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -90,13 +89,9 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
     val quests: StateFlow<List<DailyQuestEntity>> = repository.questsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Navigation state
     private val _currentScreen = MutableStateFlow(AppScreen.MAIN_MENU)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
 
-    // ------------------------------------------------------------------------
-    // PASS AND PLAY (SATU HP) STATE
-    // ------------------------------------------------------------------------
     data class PassAndPlayPlayer(
         val id: String = UUID.randomUUID().toString(),
         var name: String,
@@ -116,9 +111,9 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
     )
     val passAndPlaySettings = MutableStateFlow(MatchSettings())
     val passAndPlayQuestions = MutableStateFlow<List<MathQuestion>>(emptyList())
-    val currentRoundIndex = MutableStateFlow(0) // 0-based question index
-    val currentTurnPlayerIndex = MutableStateFlow(0) // which player's turn to answer
-    val isWaitingForTurnConfirmation = MutableStateFlow(true) // Transition screen
+    val currentRoundIndex = MutableStateFlow(0)
+    val currentTurnPlayerIndex = MutableStateFlow(0)
+    val isWaitingForTurnConfirmation = MutableStateFlow(true)
     val turnTimeRemainingSeconds = MutableStateFlow(15)
     val lastTurnFeedback = MutableStateFlow<String?>(null)
     val isTurnAnswered = MutableStateFlow(false)
@@ -127,9 +122,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
     private var turnTimerJob: Job? = null
     private var turnStartTimeMs = 0L
 
-    // ------------------------------------------------------------------------
-    // WI-FI LOKAL MULTIPLAYER STATE
-    // ------------------------------------------------------------------------
     private var wifiServer: LocalMultiplayerServer? = null
     private var hostMatchManager: HostMatchManager? = null
     private var wifiClient: LocalMultiplayerClient? = null
@@ -149,9 +141,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
 
     private var wifiTimerJob: Job? = null
 
-    // ------------------------------------------------------------------------
-    // SOLO / BOSS / STREAK STATE
-    // ------------------------------------------------------------------------
     val currentSoloMode = MutableStateFlow(SoloModeType.RACING)
     val soloQuestions = MutableStateFlow<List<MathQuestion>>(emptyList())
     val soloQuestionIndex = MutableStateFlow(0)
@@ -193,9 +182,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         _currentScreen.value = screen
     }
 
-    // ------------------------------------------------------------------------
-    // PASS AND PLAY METHODS
-    // ------------------------------------------------------------------------
     fun setPassAndPlayPlayerCount(count: Int) {
         val current = passAndPlayPlayers.value.toMutableList()
         val defaultNames = listOf("Pemain 1", "Pemain 2", "Pemain 3", "Pemain 4")
@@ -227,7 +213,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         )
         passAndPlayQuestions.value = questions
 
-        // Reset scores
         val resetPlayers = passAndPlayPlayers.value.map {
             it.copy(
                 score = 0,
@@ -278,7 +263,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
                 delay(1000)
             }
             turnTimeRemainingSeconds.value = 0
-            // Timeout handled as wrong answer
             if (!isTurnAnswered.value) {
                 submitPassAndPlayAnswer(selectedAnswer = "")
             }
@@ -337,7 +321,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         }
         passAndPlayPlayers.value = players
 
-        // Delay 1.8s then advance turn
         viewModelScope.launch {
             delay(1800)
             advancePassAndPlayTurn()
@@ -349,13 +332,11 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         val nextPlayerIdx = currentTurnPlayerIndex.value + 1
 
         if (nextPlayerIdx < totalPlayers) {
-            // Next player in this round
             currentTurnPlayerIndex.value = nextPlayerIdx
             isWaitingForTurnConfirmation.value = true
             isTurnAnswered.value = false
             lastTurnFeedback.value = null
         } else {
-            // All players completed this round
             val nextRound = currentRoundIndex.value + 1
             if (nextRound < passAndPlayQuestions.value.size) {
                 currentRoundIndex.value = nextRound
@@ -364,7 +345,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
                 isTurnAnswered.value = false
                 lastTurnFeedback.value = null
             } else {
-                // Match finished!
                 finishPassAndPlayMatch()
             }
         }
@@ -372,7 +352,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun finishPassAndPlayMatch() {
         soundManager.playVictory()
-        // Tiebreaker: Score -> Correct -> Total Time Spent
         val ranked = passAndPlayPlayers.value.sortedWith(
             compareByDescending<PassAndPlayPlayer> { it.score }
                 .thenByDescending { it.correctCount }
@@ -408,9 +387,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         _currentScreen.value = AppScreen.PASS_AND_PLAY_RESULT
     }
 
-    // ------------------------------------------------------------------------
-    // WI-FI LOKAL METHODS
-    // ------------------------------------------------------------------------
     fun initHostRoom() {
         val context = getApplication<Application>()
         val myIp = NetworkUtils.getLocalIpAddress(context)
@@ -429,9 +405,7 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
             onMessageReceived = { msg, socketId ->
                 hostMatchManager?.handleIncomingMessage(msg, socketId)
             },
-            onClientConnected = { socketId ->
-                // Client connected
-            },
+            onClientConnected = { _ -> },
             onClientDisconnected = { socketId ->
                 hostMatchManager?.handlePlayerLeave(socketId)
             },
@@ -454,7 +428,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
                 wifiFinalRankings.value = rankings
                 soundManager.playVictory()
                 _currentScreen.value = AppScreen.WIFI_RESULT_SCREEN
-                // Save to Room DB
                 viewModelScope.launch {
                     val arr = JSONArray()
                     rankings.forEachIndexed { i, r ->
@@ -547,7 +520,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
             },
             onConnected = {
                 isClientConnected.value = true
-                // Send JOIN_ROOM message
                 wifiClient?.sendMessage(
                     NetworkMessage(
                         type = NetworkMessageType.JOIN_ROOM,
@@ -723,10 +695,13 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         _currentScreen.value = AppScreen.MAIN_MENU
     }
 
-    // ------------------------------------------------------------------------
-    // SOLO MODES (RACING, BOSS, STREAK, SURVIVAL)
-    // ------------------------------------------------------------------------
-    fun startSoloGame(mode: SoloModeType) {
+    fun startSoloGame(
+        mode: SoloModeType,
+        grade: MathGrade = MathGrade.SD,
+        category: MathCategory = MathCategory.CAMPURAN_ARITMATIKA,
+        difficulty: Difficulty = Difficulty.SEDANG,
+        count: Int = 10
+    ) {
         currentSoloMode.value = mode
         soloScore.value = 0
         soloStreak.value = 0
@@ -738,10 +713,10 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         soloFeedback.value = null
 
         val questions = QuestionGenerator.generateQuestions(
-            count = 15,
-            grade = MathGrade.SD,
-            category = MathCategory.CAMPURAN_ARITMATIKA,
-            difficulty = Difficulty.SEDANG
+            count = count,
+            grade = grade,
+            category = category,
+            difficulty = difficulty
         )
         soloQuestions.value = questions
 
@@ -817,7 +792,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         isSoloAnswered.value = false
         soloFeedback.value = null
 
-        // Check loss or boss defeat
         if (currentSoloMode.value == SoloModeType.SURVIVAL && soloLives.value <= 0) {
             finishSoloGame()
             return
@@ -852,9 +826,6 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
         _currentScreen.value = AppScreen.SOLO_RESULT
     }
 
-    // ------------------------------------------------------------------------
-    // AUDIO SETTINGS
-    // ------------------------------------------------------------------------
     fun updateAudioSettings(
         sfxEnabled: Boolean,
         bgmEnabled: Boolean,
@@ -875,6 +846,37 @@ class MathBattleViewModel(application: Application) : AndroidViewModel(applicati
                     bgmVolume = bgmVolume
                 )
             )
+        }
+    }
+
+    fun selectAvatar(avatarIndex: Int) {
+        soundManager.playClick()
+        viewModelScope.launch {
+            repository.updateAvatar(avatarIndex)
+        }
+    }
+
+    fun unlockAvatar(avatarIndex: Int, cost: Int) {
+        viewModelScope.launch {
+            val success = repository.unlockAvatar(avatarIndex, cost)
+            if (success) {
+                soundManager.playVictory()
+            } else {
+                soundManager.playWrong()
+            }
+        }
+    }
+
+    fun updateProfileName(name: String) {
+        viewModelScope.launch {
+            repository.updatePlayerName(name)
+        }
+    }
+
+    fun claimQuest(quest: DailyQuestEntity) {
+        viewModelScope.launch {
+            repository.claimQuest(quest)
+            soundManager.playVictory()
         }
     }
 

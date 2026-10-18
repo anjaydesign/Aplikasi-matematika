@@ -71,7 +71,6 @@ class MathBattleRepository(private val dao: MathBattleDao) {
             )
         )
 
-        // Update profile XP and Coins
         val current = dao.getProfileSync() ?: PlayerProfileEntity()
         val newXp = current.xp + xpGained
         val newCoins = current.coins + coinsGained
@@ -122,9 +121,5 @@ class MathBattleRepository(private val dao: MathBattleDao) {
             val current = dao.getProfileSync() ?: PlayerProfileEntity()
             dao.insertOrUpdateProfile(current.copy(coins = current.coins + quest.rewardCoins))
         }
-    }
-
-    suspend fun incrementQuestProgress(questId: String, amount: Int = 1) {
-        // Simple helper for quest progress updates
     }
 }

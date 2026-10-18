@@ -29,7 +29,6 @@ class SoundAndHapticManager(private val context: Context) {
     var sfxVolume: Float = 0.8f
     var bgmVolume: Float = 0.5f
 
-    private var isBgmPausedByUser: Boolean = false
     private var isAppInBackground: Boolean = false
 
     private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

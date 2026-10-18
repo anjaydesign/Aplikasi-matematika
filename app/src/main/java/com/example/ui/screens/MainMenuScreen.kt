@@ -71,7 +71,6 @@ fun MainMenuScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Hero Header Card
         ElevatedCard(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.elevatedCardColors(
@@ -126,7 +125,6 @@ fun MainMenuScreen(
                         }
                     }
 
-                    // Coins pill
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = Color.Black.copy(alpha = 0.25f)
@@ -149,7 +147,6 @@ fun MainMenuScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // App Title and Icon
                 Image(
                     painter = painterResource(id = R.drawable.ic_math_battle_icon),
                     contentDescription = "Logo Math Battle",
@@ -175,7 +172,6 @@ fun MainMenuScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // XP Progress bar
                 val currentXp = profile?.xp ?: 0
                 val progressInLevel = (currentXp % 200) / 200f
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -210,7 +206,6 @@ fun MainMenuScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // SECTION: MULTIPLAYER MODES (CORE REQUIREMENTS)
         Text(
             text = "MODE MULTIPLAYER (2–4 PEMAIN)",
             style = MaterialTheme.typography.labelLarge.copy(
@@ -223,7 +218,6 @@ fun MainMenuScreen(
                 .padding(horizontal = 4.dp, vertical = 6.dp)
         )
 
-        // Mode A: Pass-and-Play Satu HP
         MenuActionCard(
             title = "Multiplayer Satu HP",
             subtitle = "Main bergantian 2–4 pemain di satu layar HP dengan layar transisi aman.",
@@ -237,7 +231,6 @@ fun MainMenuScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Mode B: Wi-Fi Lokal Antar-HP
         MenuActionCard(
             title = "Mabar Wi-Fi Lokal",
             subtitle = "Bermain bersama 2–4 HP lewat jaringan Wi-Fi lokal / Hotspot tanpa kuota internet.",
@@ -251,7 +244,6 @@ fun MainMenuScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // SECTION: SOLO & EXTRA FEATURES
         Text(
             text = "PETUALANGAN SOLO & FITUR SERU",
             style = MaterialTheme.typography.labelLarge.copy(
@@ -278,7 +270,6 @@ fun MainMenuScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Misi & Toko
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
@@ -312,7 +303,6 @@ fun MainMenuScreen(
                 }
             }
 
-            // Riwayat Pertandingan
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
@@ -349,7 +339,6 @@ fun MainMenuScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Pengaturan Audio
         MenuActionCard(
             title = "Pengaturan Audio & Suara",
             subtitle = "Musik latar, SFX tombol/jawaban, dan pembaca soal perempuan bahasa Indonesia.",
